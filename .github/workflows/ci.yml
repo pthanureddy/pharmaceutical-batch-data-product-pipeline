@@ -12,8 +12,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -32,7 +32,7 @@ jobs:
           python -m pharma_data_product init --database artifacts/batch-data.db
           python -m pharma_data_product ingest --database artifacts/batch-data.db --input examples/batch-events.ndjson
           python -m pharma_data_product summary --database artifacts/batch-data.db
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: verification-evidence
           path: |
