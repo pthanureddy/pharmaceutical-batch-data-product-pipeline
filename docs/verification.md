@@ -23,5 +23,12 @@ as command evidence and is not a throughput or scalability claim.
   account.
 - No external broker, object store, cloud deployment, production source, regulated validation,
   load test, availability result, or business improvement is claimed.
-- Hosted CI evidence is added only after the public workflow completes.
+
+## Hosted CI
+
+GitHub Actions run
+[`37492057602`](https://github.com/pthanureddy/pharmaceutical-batch-data-product-pipeline/actions/runs/37492057602)
+passed Ruff, all tests and coverage enforcement, Snowflake-dialect SQLFluff linting, package build,
+the four-event CLI smoke flow, and verification-artifact upload for commit
+`1b097aa18ebe8759cdd4d8c245e9cabc6ec50b0b`.
 
