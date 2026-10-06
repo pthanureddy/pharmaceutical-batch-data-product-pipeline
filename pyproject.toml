@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pharmaceutical-batch-data-product-pipeline"
+version = "0.1.0"
+description = "Auditable ingestion and data-product qualification pipeline for synthetic pharmaceutical batch events"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Thanu Reddy Pathipati", email = "pthanureddy@gmail.com"}]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2.2",
+  "pytest>=8.3",
+  "pytest-cov>=6.0",
+  "ruff>=0.11",
+  "sqlfluff>=3.4",
+]
+
+[project.scripts]
+pharma-data-product = "pharma_data_product.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers --cov=pharma_data_product --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.coverage.run]
+branch = true
+source = ["pharma_data_product"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.sqlfluff.core]
+dialect = "snowflake"
+templater = "raw"
+max_line_length = 100
+
+[tool.sqlfluff.indentation]
+tab_space_size = 2
+
