@@ -63,6 +63,67 @@ def test_identical_replay_is_counted_without_new_row(store):
     assert store.fetch_one("SELECT COUNT(*) AS value FROM raw_batch_event")["value"] == 1
 
 
+def test_refreshes_each_changed_batch_once_per_micro_batch(store, monkeypatch):
+    original_refresh = store.refresh_batch
+    refreshed = []
+
+    def record_refresh(batch_id):
+        refreshed.append(batch_id)
+        original_refresh(batch_id)
+
+    monkeypatch.setattr(store, "refresh_batch", record_refresh)
+    first = "BATCH-2026-001"
+    second = "BATCH-2026-002"
+    result = StreamProcessor(store, micro_batch_size=3).ingest(
+        [
+            valid_event(event_id="a1"),
+            valid_event(event_id="a2"),
+            valid_event(event_id="b1", batch_id=second),
+            valid_event(event_id="a1"),
+            valid_event(event_id="a3"),
+            valid_event(event_id="invalid", batch_id=second, sequence_no=-1),
+        ]
+    )
+
+    assert refreshed == [first, second, first]
+    assert (result.accepted_count, result.duplicate_count, result.quarantined_count) == (4, 1, 1)
+    assert store.fetch_all(
+        "SELECT batch_id, source_event_count FROM batch_snapshot ORDER BY batch_id"
+    ) == [
+        {"batch_id": first, "source_event_count": 3},
+        {"batch_id": second, "source_event_count": 1},
+    ]
+
+
+def test_snapshot_failure_rolls_back_the_micro_batch(store, monkeypatch):
+    processor = StreamProcessor(store)
+    processor.ingest([valid_event()])
+    prior_snapshot = store.fetch_one("SELECT * FROM batch_snapshot")
+    prior_watermark = store.fetch_one("SELECT * FROM stream_watermark")
+    original_refresh = store.refresh_batch
+    second = "BATCH-2026-002"
+
+    def fail_second_refresh(batch_id):
+        if batch_id == second:
+            raise RuntimeError("snapshot write failed")
+        original_refresh(batch_id)
+
+    monkeypatch.setattr(store, "refresh_batch", fail_second_refresh)
+    with pytest.raises(RuntimeError, match="snapshot write failed"):
+        processor.ingest(
+            [
+                valid_event(event_id="next", occurred_at="2026-10-06T08:05:00+00:00"),
+                valid_event(event_id="other", batch_id=second),
+                valid_event(event_id="invalid", sequence_no=-1),
+            ]
+        )
+
+    assert store.fetch_all("SELECT event_id FROM raw_batch_event") == [{"event_id": "evt-001"}]
+    assert store.fetch_all("SELECT * FROM batch_snapshot") == [prior_snapshot]
+    assert store.fetch_all("SELECT * FROM stream_watermark") == [prior_watermark]
+    assert store.fetch_all("SELECT * FROM data_quality_issue") == []
+
+
 def test_event_id_conflict_is_quarantined(store):
     processor = StreamProcessor(store)
     processor.ingest([valid_event()])

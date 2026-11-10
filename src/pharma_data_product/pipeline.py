@@ -97,12 +97,17 @@ class StreamProcessor:
         return result
 
     def _ingest_batch(self, raw_events: list[dict[str, Any]], result: IngestionResult) -> None:
+        changed_batches: set[str] = set()
         with self.store.transaction():
             for raw in raw_events:
                 result.input_count += 1
-                self._ingest_one(raw, result)
+                batch_id = self._ingest_one(raw, result)
+                if batch_id is not None:
+                    changed_batches.add(batch_id)
+            for batch_id in sorted(changed_batches):
+                self.store.refresh_batch(batch_id)
 
-    def _ingest_one(self, raw: dict[str, Any], result: IngestionResult) -> None:
+    def _ingest_one(self, raw: dict[str, Any], result: IngestionResult) -> str | None:
         if raw.get("__invalid_json__") is True:
             raw_text = str(raw.get("raw", ""))[:16_384]
             self._quarantine(
@@ -112,7 +117,7 @@ class StreamProcessor:
                 message=f"line {raw.get('line_number')}: {raw.get('message')}",
                 raw_text=raw_text,
             )
-            return
+            return None
 
         raw_text = canonical_json(raw)
         try:
@@ -125,13 +130,13 @@ class StreamProcessor:
                 message=str(exc),
                 raw_text=raw_text[:16_384],
             )
-            return
+            return None
 
         existing_digest = self.store.existing_digest(event.event_id)
         if existing_digest is not None:
             if existing_digest == event.digest:
                 result.duplicate_count += 1
-                return
+                return None
             self._quarantine(
                 result,
                 event_id=event.event_id,
@@ -140,7 +145,7 @@ class StreamProcessor:
                 raw_text=raw_text,
             )
             result.conflict_count += 1
-            return
+            return None
 
         watermark = self.store.watermark(event.partition_key)
         if watermark is not None and event.occurred_at < watermark - self.allowed_lateness:
@@ -155,12 +160,12 @@ class StreamProcessor:
                 raw_text=raw_text,
             )
             result.late_count += 1
-            return
+            return None
 
         self.store.insert_event(event)
         self.store.advance_watermark(event)
-        self.store.refresh_batch(event.batch_id)
         result.accepted_count += 1
+        return event.batch_id
 
     def _quarantine(
         self,

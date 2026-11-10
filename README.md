@@ -16,8 +16,8 @@ Snowflake assets are linted target-state SQL only; no Snowflake account or live 
 - Processes configurable micro-batches with partition watermarks and an allowed-lateness window.
 - Treats identical event replays as duplicates and quarantines conflicting event-ID reuse.
 - Quarantines malformed, contract-invalid, and excessively late records with SHA-256 evidence.
-- Recomputes deterministic batch snapshots from accepted source events so bounded out-of-order
-  arrival does not corrupt the curated state.
+- Rebuilds each changed batch snapshot once per micro-batch transaction. Ordered source events
+  determine the curated state, including accepted out-of-order events.
 - Persists raw events, watermarks, curated snapshots, data-quality issues, processing runs, and
   analytical views in SQLite for reproducible local verification.
 - Provides Snowflake-dialect raw/curated schemas and an incremental `MERGE` target design checked
@@ -76,6 +76,7 @@ least one record is quarantined. A processing-run record is written in both case
 .\.venv\Scripts\python.exe -m pytest
 .\.venv\Scripts\python.exe -m sqlfluff lint sql\snowflake --dialect snowflake
 .\.venv\Scripts\python.exe -m build
+.\.venv\Scripts\python.exe tools/measure_snapshot_refresh.py
 ```
 
 GitHub Actions runs the same checks and uploads the package plus test/coverage evidence. Measured

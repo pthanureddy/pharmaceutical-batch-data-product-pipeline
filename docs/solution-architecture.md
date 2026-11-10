@@ -29,7 +29,8 @@ across cloud ingestion and Snowflake layers after platform, security, and valida
    source/site/line partition, and commits each micro-batch atomically.
 3. **Raw zone** stores accepted canonical events and their SHA-256 digest.
 4. **Quality zone** stores invalid, late, and conflicting records with reason codes.
-5. **Curated zone** rebuilds the latest batch snapshot from the accepted ordered event history.
+5. **Curated zone** rebuilds each changed batch snapshot once from accepted ordered event history
+   before the micro-batch transaction commits.
 6. **Operations evidence** records counts and duration for every processing run.
 
 ## 4. Target cloud and streaming architecture
@@ -66,7 +67,8 @@ restricted than curated analytical access.
 ## 6. Performance and sustainability approach
 
 The executable design bounds payload size and micro-batch size, indexes the batch-order query, and
-recomputes only affected batches. The target design separates storage and compute, clusters or
+uses a set of changed batch IDs to avoid repeated rebuilds inside a transaction. The set is bounded
+by the number of inputs in that micro-batch. The target design separates storage and compute, clusters or
 partitions around observed access paths only after measurement, and scales warehouses by workload
 class rather than defaulting to permanent high capacity. Query history, ingestion lag, task
 duration, scanned bytes, and credit consumption would drive tuning.

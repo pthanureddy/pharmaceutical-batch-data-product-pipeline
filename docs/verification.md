@@ -1,5 +1,35 @@
 # Verification Record
 
+## Snapshot refresh verification, 10 November 2026
+
+The processor now collects changed batch IDs in a set and rebuilds each affected snapshot once
+before committing the micro-batch transaction. Raw writes, watermarks, quarantines and curated
+updates share the transaction. Two regression tests cover distinct batch IDs across micro-batches
+and a snapshot write failure that rolls back the current micro-batch.
+
+Run `python tools/measure_snapshot_refresh.py` after installing the package. The script uses an
+in-memory SQLite store, one synthetic manufacturing batch, 1,000 ordered events and a micro-batch
+size of 100. It measures calls to `refresh_batch` and replays the input once. For the baseline
+comparison, use the same script with `PYTHONPATH` pointing to `src` in a checkout of
+`7e1f6f185cc9155195fc1f0a9cae9d538f6755d7`. Run it again against the updated source.
+
+| Measure | Baseline | Updated |
+| --- | ---: | ---: |
+| Accepted events | 1,000 | 1,000 |
+| Snapshot rebuild calls | 1,000 | 10 |
+| Replay duplicates | 1,000 | 1,000 |
+| Snapshot rebuild calls during replay | 0 | 0 |
+
+The curated values matched after excluding the wall-clock `refreshed_at` metadata field. The count
+measures repeated work for this fixture. Runtime throughput, distributed scaling and performance
+on other workloads remain unmeasured.
+
+Local Ruff lint, 27 tests, SQLFluff lint, source distribution and wheel builds, and the four-event
+CLI smoke flow passed. Coverage was 305/314 lines (97.13%) and 73/78 branches (93.59%). The
+branch-aware aggregate used by the configured coverage gate was 96.43%.
+
+## Original project verification, 6 October 2026
+
 Verified locally on 2026-10-06 with Python 3.11.9 on Windows.
 
 ## Commands and results
