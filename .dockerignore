@@ -1,0 +1,11 @@
+.git
+.github
+.venv
+artifacts
+dist
+htmlcov
+__pycache__
+*.pyc
+*.sqlite
+*.db
+

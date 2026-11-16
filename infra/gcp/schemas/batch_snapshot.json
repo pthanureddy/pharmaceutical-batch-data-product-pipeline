@@ -1,0 +1,15 @@
+[
+  {"name":"batch_id","type":"STRING","mode":"REQUIRED"},
+  {"name":"site_id","type":"STRING","mode":"REQUIRED"},
+  {"name":"line_id","type":"STRING","mode":"REQUIRED"},
+  {"name":"material_id","type":"STRING","mode":"REQUIRED"},
+  {"name":"started_at","type":"TIMESTAMP","mode":"NULLABLE"},
+  {"name":"released_at","type":"TIMESTAMP","mode":"NULLABLE"},
+  {"name":"quality_status","type":"STRING","mode":"NULLABLE"},
+  {"name":"completed_step_count","type":"INTEGER","mode":"REQUIRED"},
+  {"name":"latest_sequence_no","type":"INTEGER","mode":"REQUIRED"},
+  {"name":"latest_event_at","type":"TIMESTAMP","mode":"REQUIRED"},
+  {"name":"source_event_count","type":"INTEGER","mode":"REQUIRED"},
+  {"name":"refreshed_at","type":"TIMESTAMP","mode":"REQUIRED"}
+]
+

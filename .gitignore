@@ -9,4 +9,7 @@ dist/
 build/
 *.egg-info/
 artifacts/
+.terraform/
+*.tfstate
+*.tfstate.*
 

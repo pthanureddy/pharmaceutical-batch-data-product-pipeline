@@ -56,6 +56,12 @@ Required production decisions include approved connectivity, encryption and key 
 identity roles, network boundaries, retention, data classification, schema evolution, disaster
 recovery, region selection, warehouse sizing, cost controls, and validated change management.
 
+An alternate Google Cloud target is implemented as reviewable Terraform, BigQuery SQL, a
+Cloud Run landing adapter and a Composer/Airflow DAG. It maps Cloud Storage, Pub/Sub retry/DLQ,
+BigQuery raw/curated/operations zones, dedicated IAM and backlog monitoring to the same data
+contract. See `gcp-target-architecture.md`. CI validates these artifacts, but no Google Cloud
+resources or Composer environment were created.
+
 ## 5. Security and privacy
 
 The synthetic contract excludes patient and operator-identifying data. A production version would

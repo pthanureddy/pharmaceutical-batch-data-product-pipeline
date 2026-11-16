@@ -13,6 +13,10 @@ authors = [{name = "Thanu Reddy Pathipati", email = "pthanureddy@gmail.com"}]
 dependencies = []
 
 [project.optional-dependencies]
+gcp = [
+  "google-cloud-bigquery>=3.25,<4",
+  "google-cloud-storage>=2.18,<4",
+]
 dev = [
   "build>=1.2.2",
   "pytest>=8.3",

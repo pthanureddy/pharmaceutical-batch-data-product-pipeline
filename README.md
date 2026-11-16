@@ -3,7 +3,9 @@
 An independent portfolio project for ingesting synthetic pharmaceutical manufacturing batch
 events into a traceable operational data product. It demonstrates Python and SQL engineering,
 event-time processing, data quality, conceptual/logical/physical modeling, monitoring evidence,
-CI/CD, and a qualification-oriented solution architecture package.
+CI/CD, and a qualification-oriented solution architecture package. A validated GCP target design
+adds Cloud Storage, Pub/Sub retry/DLQ behavior, BigQuery, Cloud Run, Composer/Airflow, Terraform,
+and a containerized landing adapter without claiming a live cloud deployment.
 
 All data are synthetic. This repository is not affiliated with Roche or another pharmaceutical
 company, is not a validated GxP system, and has not processed production or patient data. The
@@ -24,6 +26,8 @@ Snowflake assets are linted target-state SQL only; no Snowflake account or live 
   with SQLFluff, without presenting that design as deployed experience.
 - Includes a Solution Architecture Document, three-level data model, data-product qualification
   checklist, operational runbook, and explicit production gaps.
+- Includes a unit-tested Cloud Storage-to-BigQuery landing adapter, BigQuery DDL/MERGE/quality
+  SQL, a Composer/Airflow DAG, and Terraform mock-plan tests for the GCP target architecture.
 
 ## Architecture
 
@@ -50,6 +54,8 @@ Target-state only: object storage / Kafka -> Snowflake RAW -> CURATED -> MART
 See [Solution Architecture](docs/solution-architecture.md),
 [Data Model](docs/data-model.md), and
 [Data Product Qualification](docs/data-product-qualification.md).
+The alternate Google Cloud flow is documented in
+[GCP Target Architecture](docs/gcp-target-architecture.md).
 
 ## Quick start
 
@@ -75,6 +81,7 @@ least one record is quarantined. A processing-run record is written in both case
 .\.venv\Scripts\python.exe -m ruff check .
 .\.venv\Scripts\python.exe -m pytest
 .\.venv\Scripts\python.exe -m sqlfluff lint sql\snowflake --dialect snowflake
+.\.venv\Scripts\python.exe -m sqlfluff lint sql\bigquery --dialect bigquery
 .\.venv\Scripts\python.exe -m build
 .\.venv\Scripts\python.exe tools/measure_snapshot_refresh.py
 ```
@@ -83,6 +90,9 @@ GitHub Actions runs the same checks and uploads the package plus test/coverage e
 results belong in [Verification](docs/verification.md) after a reproducible run rather than in this
 overview.
 
+The hosted workflow also builds the non-root Cloud Run image, validates and mock-tests Terraform,
+and imports the Airflow DAG with its retry and dependency contracts.
+
 ## Repository map
 
 ```text
@@ -90,6 +100,9 @@ src/pharma_data_product/  event contract, micro-batch processor, SQLite data pro
 tests/                    model, pipeline, replay, lateness, quality, and CLI tests
 examples/                 synthetic NDJSON input
 sql/snowflake/            linted target-state Snowflake DDL and incremental MERGE
+sql/bigquery/             linted BigQuery schema, incremental MERGE, and quality assertions
+infra/gcp/                Terraform for storage, messaging, BigQuery, Cloud Run, IAM, monitoring
+orchestration/dags/       Composer/Airflow orchestration with retries and a quality gate
 docs/                     architecture, models, qualification, operations, and verification
 .github/workflows/        repeatable lint, test, package, and SQL checks
 ```
@@ -103,6 +116,8 @@ docs/                     architecture, models, qualification, operations, and v
 - Snowflake SQL is a design artifact validated by SQLFluff, not a deployment or operational claim.
 - The stream is a deterministic NDJSON micro-batch reference. Kafka, CDC, schema registry, object
   storage, orchestration, and multi-node processing are target-state components only.
+- The GCP resources are Terraform-validated target-state artifacts and were not applied to a
+  Google Cloud project. The Airflow DAG is imported in CI, not run in a Composer environment.
 - No throughput, scalability, availability, business-impact, or production-quality claim is made.
 
 ## License

@@ -1,0 +1,11 @@
+[
+  {"name":"issue_id","type":"STRING","mode":"REQUIRED"},
+  {"name":"event_id","type":"STRING","mode":"NULLABLE"},
+  {"name":"issue_code","type":"STRING","mode":"REQUIRED"},
+  {"name":"issue_message","type":"STRING","mode":"REQUIRED"},
+  {"name":"raw_digest","type":"STRING","mode":"REQUIRED"},
+  {"name":"raw_payload","type":"STRING","mode":"REQUIRED"},
+  {"name":"source_object","type":"STRING","mode":"REQUIRED"},
+  {"name":"recorded_at","type":"TIMESTAMP","mode":"REQUIRED"}
+]
+

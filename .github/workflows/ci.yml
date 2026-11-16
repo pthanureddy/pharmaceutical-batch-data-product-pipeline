@@ -25,8 +25,12 @@ jobs:
         run: python -m pytest --junitxml=artifacts/test-results.xml --cov-report=xml:artifacts/coverage.xml
       - name: Snowflake SQL lint
         run: python -m sqlfluff lint sql/snowflake --dialect snowflake
+      - name: BigQuery SQL lint
+        run: python -m sqlfluff lint sql/bigquery --dialect bigquery
       - name: Build package
         run: python -m build
+      - name: Build Cloud Run image
+        run: docker build -t pharma-data-product:${{ github.sha }} .
       - name: CLI smoke
         run: |
           python -m pharma_data_product init --database artifacts/batch-data.db
@@ -39,4 +43,36 @@ jobs:
             artifacts/test-results.xml
             artifacts/coverage.xml
             dist/*
+
+  gcp-infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.13.5"
+      - name: Terraform format
+        run: terraform -chdir=infra/gcp fmt -check -recursive
+      - name: Terraform initialize
+        run: terraform -chdir=infra/gcp init -backend=false
+      - name: Terraform validate
+        run: terraform -chdir=infra/gcp validate
+      - name: Terraform mock tests
+        run: terraform -chdir=infra/gcp test
+
+  composer-dag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install Airflow and test tools
+        run: |
+          python -m pip install "apache-airflow==2.10.5" \
+            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.11.txt"
+          python -m pip install pytest
+      - name: Import and inspect Composer DAG
+        run: python -m pytest tests/test_airflow_dag.py -q
 
