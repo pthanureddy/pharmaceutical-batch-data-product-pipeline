@@ -1,5 +1,36 @@
 # Verification Record
 
+## GCP target architecture verification, 16 November 2026
+
+The Google Cloud target adds a unit-tested Cloud Storage-to-BigQuery landing adapter, BigQuery
+schema/MERGE/quality SQL, a non-root Cloud Run image, Terraform for Cloud Storage, Pub/Sub,
+BigQuery, Cloud Run, IAM and monitoring, and a Composer/Airflow orchestration DAG.
+
+GitHub Actions run
+[`43916802585`](https://github.com/pthanureddy/pharmaceutical-batch-data-product-pipeline/actions/runs/43916802585)
+passed all three jobs for commit `56cc31f4434a7393982191f6cf1ee874cf55e46e`:
+
+| Check | Result |
+| --- | --- |
+| Python quality and tests | Ruff passed; 31 tests passed; one Airflow-only test was isolated |
+| Coverage | 93.78% branch-aware aggregate; configured 90% gate passed |
+| SQL | Snowflake and BigQuery SQLFluff checks passed |
+| Package and CLI | source/wheel build passed; four events accepted, zero quarantined |
+| Container | non-root Cloud Run image built successfully in hosted CI |
+| Terraform | format, initialization and validation passed; 2 mock-plan tests passed |
+| Composer/Airflow | DAG imported; schedule, retries, task order and quality gate test passed |
+
+Local verification on Python 3.11.9 produced the same 31 passing tests and 93.78% aggregate
+coverage. Terraform 1.13.5 validated the configuration and passed both mock-provider tests.
+
+### Evidence boundary
+
+- No Google Cloud resource, Composer environment or BigQuery dataset was provisioned.
+- BigQuery SQL was parsed and linted, not executed against a warehouse.
+- The Cloud Run image was built, not published to Artifact Registry or deployed.
+- Terraform tests used a mocked Google provider and did not contact a Google Cloud project.
+- The Airflow DAG was imported and its contracts tested, not scheduled in Cloud Composer.
+
 ## Snapshot refresh verification, 10 November 2026
 
 The processor now collects changed batch IDs in a set and rebuilds each affected snapshot once
